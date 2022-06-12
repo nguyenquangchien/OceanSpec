@@ -3,6 +3,14 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+
+# WMO data files
+*.grib
+*.grib2
+
+# temporary files used by jsonschema
+*.idx
+
 # C extensions
 *.so
 
