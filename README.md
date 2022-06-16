@@ -34,5 +34,7 @@ Nguyen Q. Chien writes the code run on Anaconda Python with Matplotlib/Basemap/C
 
 James Varndell writes the ![web-based version](https://cds-dev.copernicus-climate.eu/apps/c3s/app-hackathon-wave-spectrum) and helped Nguyen Chien use the libraries delivered by ECMWF.
 
-![ECMWF logo](fig/ECWMF-logo.png) ![Bangor logo](fig/Bangor-logo.png)
+<img src="fig/ECWMF-logo.png" width="120">
+
+<img src="fig/Bangor-logo.png" width="120">
 
