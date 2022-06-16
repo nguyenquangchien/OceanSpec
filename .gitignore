@@ -4,9 +4,17 @@ __pycache__/
 *$py.class
 
 
-# WMO data files
+# WMO/netCDF data files (usually big)
 *.grib
 *.grib2
+*.nc
+
+# files on Mac OS X
+._*
+
+# backup files
+*.bak
+*copy.py
 
 # temporary files used by jsonschema
 *.idx
