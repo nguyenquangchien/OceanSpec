@@ -1,48 +1,38 @@
 # OceanSpec
 Visualize the ocean wave spectra in a meaningful way. 
 
-## Background
 
-Spectral representation is key to describe the irregular ocean surface level. Information including random wave amplitudes whereas the random phase is omitted. The wave energy density is described as a function of frequency, E(f).
+## ECMWF convention
 
-The use of radar satellite for measuring sea surface height allows us to reconstruct the frequency-directional spectrum, E(f,θ). ECMWF has such data (more on that later).
+Following the IFS Documentation - Cy43r1, the two-dimensional (2-D) wave spectrum F (f, θ) is computed at each grid point of the wave model. In its continuous form, F (f, θ) describes how the wave energy is distributed as function of frequency f and propagation direction θ. In the numerical implementation of the wave model, F is discretised using n<sub>f</sub> frequencies and n<sub>θ</sub> directions. In the current analysis and deterministic forecast configuration n<sub>f</sub> = 36 and n<sub>θ</sub> = 36 (in ERA5, n<sub>f</sub> = 30 and n<sub>θ</sub> = 24). Whenever possible, F (f, θ) is output and archived as parameter 251. It corresponds to the full description of the wave field at any grid point. It is however a very cumbersome quantity to plot as a full field since it consists of n<sub>f</sub> × n<sub>θ</sub> values at each grid point. Nevertheless, it can plotted for specific locations. 
 
-Despite the randomnese of individual waves, the wave spectra usually exhibit typical shapes, namely Pierson-Moskowitz spectrum for fully-developed seas and Jonswap spectrum for young seas. 
+Shown below is the spectrum at Location 6 as indicated on the map (model bathymetry, parameter 219 is also shown). The 2-D wave spectrum is represented using a polar plot representation, where the radial coordinate represents frequency and the polar direction is the propagation direction of each wave component. The oceanographic convention is used, such that upwards indicates that waves are propagating to the North. The frequency spectrum, which indicates how wave energy is distributed in frequency, is obtained by integrating over all directions. Typically, the sea state is composed of many different wave systems.
 
-The formulation involves α is an energy scaling coefficient, σp is the peak radial frequency, γ0 is the peak enhancement factor and ε determines the spectral width around the peak. 
-
-* PM spectrum, α = 0.0081 and γ0 = 1. 
-* Jonswap spectrum γ0 = 3.3, and either ε = 0.07 for σ < σp or ε = 0.09 for σ > σp.
-
-Regarding the directional distribution of wave energy density, a symmetric treatment is frequently used, for example the cos^m distribution, D(θ) = A cos(θ - θp)^m.
-
-where A is a proportionality factor to ensure unity of the integrated directional distribution function and θp is the peak direction. Small (large) values of m correspond to broad (narrow) directional distribution. The frequency-directional spectrum can now be constructed according to:
-
-E(f,θ) = E(f) D(θ)
-
-An example case (energy density distribution of a random sea state according to a Jonswap frequency spectrum and cosm directional distribution with m = 20 with a peak frequency of 0.1 Hz and a peak direction of 0°.)
+![Normalised 2D spectrum and frequency spectrum for Location 6](fig/wave_spectrum_Location_6_ECMWF.png) ![Map of bathymetry and locations where wave spectra are available](fig/map_wave_bathy_ECMWF.png)
+> Normalised 2D spectrum and frequency spectrum for Location 6 (56°N, 0°E) at 20160327 06:00. Hs = 3.09 m, Tm = 6.68 s, Tp = 7.63 s, MWD = 358°, PWD = 330°, Peakedness Qp = 1.34, Directional Spread = 0.57. Concentric circles are every 0.05 Hz. Map showing Location 6 and other locations with wave spectra available.
 
 
-## ECMWF data products
+Therefore, a good way to visualize these wave spectra on cartographic maps is needed.
 
-ECMWF has data for deriving wave spectrum. The SAR data is collected from ERS-1, ERS-2, and more recently, ENVISAT. SAR data assimilation has been made using a spectral partitioning scheme, based on the principle of the inverted catchment area. The analysed spectra are reconstructed by resizing and reshaping the model spectra based on the mean parameters obtained from the optimum interpolation scheme.
+## Requirement
 
+Based on the data downloaded from ECMWF, display the wave height field and allow users click on the map. Snap the cursor location to a data point on the grid, extract data and draw a polar plot showing the ocean wave spectrum. 
 
-## Example of wave spectra visualization
+When the user moves the cursor and clicks elsewhere, update the spectrum plot.
 
-The earlier researches, wave spectra are usually shown as E(f), showing a change of spectrum shape in a coastal transect (being natural or in a laboratory).
+## Implementation
 
-![Figure of wave spectra observed offshore Sylt](fig/spectrum_Sylt.png)
-> Wave spectra observed offshore Sylt (Carter 1988)
+* Using `Matplotlib` for plotting a color field of global wave height
+* Using `magpye`, `cartopy`, or `Basemap` to create geographical grid and plot coastlines
+* Using `Matplotlib` for plotting spectral graphs.
 
-![The NW transect of Roi-Namur island](fig/Roi-Namur_island.png) 
-![Wave spectra at NW1-5 locations](fig/spectra_Roi-Namur.png)
-> Wave spectra at selected locations along a coastal transect of a coral reef (![Cheriton et al. 2016](https://agupubs.onlinelibrary.wiley.com/doi/10.1002/2015JC011231))
+## Credit
 
-With researches employing a 2-D spectral wave model, the full information of wave spectrum is available at any location in the domain, and users can pick specific points to view the spectrum of interest.
+This work is done in ECMWF Hackathon, Reading 11-12 June 2022.
 
-![Computed wave spectra offshore and nearshore Scripps](fig/spectra_wave_Scripps.png)
-> Computed wave spectra offshore and nearshore Scripps, La Jolla CA (Roelvink & Reniers 2011).
+Nguyen Q. Chien writes the code run on Anaconda Python with Matplotlib/Basemap/Cartopy visualization.
 
-For example, with the simulation using SWAN model for the west waves approaching Scripps (La Jolla, CA) the offshore spectrum has a strong swell peak around θ = 270° and a much weaker peak incident from the South-West around θ = 200° (panel B). When approaching the shoreline, wave refraction (as evidence from panel A) causes energy to shift away from the main direction resulting in a bi-modal directional spectrum (panel C) (Roelvink & Reniers 2011). Also, refraction is stronger for lower frequencies, E(f,θ) is no longer symmetric around θ = 270°.
+James Varndell writes the ![web-based version](https://cds-dev.copernicus-climate.eu/apps/c3s/app-hackathon-wave-spectrum) and helped Nguyen Chien use the libraries delivered by ECMWF.
+
+![ECMWF logo](fig/ECWMF-logo.png) ![Bangor logo](fig/Bangor-logo.png)
 
