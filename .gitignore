@@ -9,6 +9,9 @@ __pycache__/
 *.grib2
 *.nc
 
+# ECMWF library files
+code/ecmwflibs/*
+
 # files on Mac OS X
 ._*
 
