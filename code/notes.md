@@ -57,34 +57,6 @@ Attributes:
 ```
 
 
-## For spect.grib (size 3.09 GB)
-
-```
-<xarray.Dataset>
-Dimensions:          (time: 24, directionNumber: 24, frequencyNumber: 30, values: 315258)
-Coordinates:
-    number           int64 ...
-  * time             (time) datetime64[ns] 2022-03-01 ... 2022-03-01T23:00:00
-    step             timedelta64[ns] ...
-    meanSea          float64 ...
-  * directionNumber  (directionNumber) int64 1 2 3 4 5 6 7 ... 19 20 21 22 23 24
-  * frequencyNumber  (frequencyNumber) int64 1 2 3 4 5 6 7 ... 25 26 27 28 29 30
-    latitude         (values) float64 ...
-    longitude        (values) float64 ...
-    valid_time       (time) datetime64[ns] ...
-Dimensions without coordinates: values
-Data variables:
-    d2fd             (time, directionNumber, frequencyNumber, values) float32 ...
-Attributes:
-    GRIB_edition:            1
-    GRIB_centre:             ecmf
-    GRIB_centreDescription:  European Centre for Medium-Range Weather Forecasts
-    GRIB_subCentre:          0
-    Conventions:             CF-1.7
-    institution:             European Centre for Medium-Range Weather Forecasts
-    history:                 2022-06-12T07:31 GRIB to CDM+CF via cfgrib-0.9.1...
-```
-
 ## Dissecting integ.grib
 
 ```
@@ -176,3 +148,93 @@ Attributes: (12/30)
 >>> 
 
 ```
+
+
+## For spect.grib (size 3.09 GB)
+
+```
+<xarray.Dataset>
+Dimensions:          (time: 24, directionNumber: 24, frequencyNumber: 30, values: 315258)
+Coordinates:
+    number           int64 ...
+  * time             (time) datetime64[ns] 2022-03-01 ... 2022-03-01T23:00:00
+    step             timedelta64[ns] ...
+    meanSea          float64 ...
+  * directionNumber  (directionNumber) int64 1 2 3 4 5 6 7 ... 19 20 21 22 23 24
+  * frequencyNumber  (frequencyNumber) int64 1 2 3 4 5 6 7 ... 25 26 27 28 29 30
+    latitude         (values) float64 ...
+    longitude        (values) float64 ...
+    valid_time       (time) datetime64[ns] ...
+Dimensions without coordinates: values
+Data variables:
+    d2fd             (time, directionNumber, frequencyNumber, values) float32 ...
+Attributes:
+    GRIB_edition:            1
+    GRIB_centre:             ecmf
+    GRIB_centreDescription:  European Centre for Medium-Range Weather Forecasts
+    GRIB_subCentre:          0
+    Conventions:             CF-1.7
+    institution:             European Centre for Medium-Range Weather Forecasts
+    history:                 2022-06-12T07:31 GRIB to CDM+CF via cfgrib-0.9.1...
+```
+
+Querying the first element of `d2fd` in `spect.grib`:
+```
+<xarray.DataArray 'd2fd' (directionNumber: 24, frequencyNumber: 30, values: 315258)>
+[226985760 values with dtype=float32]
+Coordinates:
+    number           int64 ...
+    time             datetime64[ns] 2022-03-01
+    step             timedelta64[ns] ...
+    meanSea          float64 ...
+  * directionNumber  (directionNumber) int64 1 2 3 4 5 6 7 ... 19 20 21 22 23 24
+  * frequencyNumber  (frequencyNumber) int64 1 2 3 4 5 6 7 ... 25 26 27 28 29 30
+    latitude         (values) float64 ...
+    longitude        (values) float64 ...
+    valid_time       datetime64[ns] ...
+Dimensions without coordinates: values
+Attributes: (12/27)
+    GRIB_paramId:                            140251
+    GRIB_dataType:                           an
+    GRIB_numberOfPoints:                     315258
+    GRIB_typeOfLevel:                        meanSea
+    GRIB_stepUnits:                          1
+    GRIB_stepType:                           instant
+    ...                                      ...
+    GRIB_shortName:                          2dfd
+    GRIB_totalNumber:                        0
+    GRIB_units:                              m**2 s radian**-1
+    long_name:                               2D wave spectra (single)
+    units:                                   m**2 s radian**-1
+    standard_name:                           unknown
+```
+
+For different time layers:
+
+* `d2fd[0]` --> `time             datetime64[ns] 2022-03-01`
+* `d2fd[1]` --> `time             datetime64[ns] 2022-03-01T01:00:00`
+
+Fixing the direction: 
+
+* `ds.d2fd[1][0]` --> `directionNumber  int64 1`
+
+Fixing both the direction and the frequency: 
+
+* `ds.d2fd[1][0]` --> 
+
+```
+    directionNumber  int64 1
+    frequencyNumber  int64 1
+```
+
+Array organization:
+
+* `arr = ds.d2fd[5][3].values` --> shape `(30, 315258)`.
+* `arr = ds.d2fd[5][3][2].values` --> shape `(315258,)`.
+
+Is `315258` associated with latitude and longitude?
+315258 = 2 × 3 × 52543.
+259200 = 180 × 360 × 4 (resolution 0.5 degrees).
+259920 = 361 × 720 = shape of ds.swh[0] used for plotting.
+
+There is a discrepancy between the data density and geographical density.
