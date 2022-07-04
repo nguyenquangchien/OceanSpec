@@ -16,6 +16,7 @@ code/ecmwflibs/*
 ._*
 
 # backup files
+*BAK.*
 *.bak
 *copy.py
 
