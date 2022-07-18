@@ -1,3 +1,4 @@
+import random
 import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt 
@@ -15,7 +16,7 @@ def read_file(file_name):
     return ds
 
 
-def plot_integ(ds):
+def plot_integ(integ, spect):
     """ Plot a map of the integrated wave properties.
     """
     map = Basemap(projection='cyl',lon_0=180,lat_0=0,
@@ -24,12 +25,12 @@ def plot_integ(ds):
     map.drawcoastlines(linewidth=0.25)
     map.drawmeridians(np.arange(0, 361, 30))
     map.drawparallels(np.arange(-90, 91, 30))
-    ds.swh[0].plot(cmap=plt.cm.coolwarm)
+    integ.swh[0].plot(cmap=plt.cm.coolwarm)
     global Hs_array
-    Hs_array = ds.swh[0]
+    Hs_array = integ.swh[0]
     print('Shape of data array: ', Hs_array.shape)
     plt.connect('motion_notify_event', mouse_move)
-    polar_plot()
+    polar_plot(spect)
     plt.show()
 
 
@@ -37,8 +38,16 @@ def read_spec_grib(file_name):
     """ Read the spectral data from a GRIB file.
     """
     ds = read_file(file_name)
-    layer_init = ds.d2fd[0]
-    print('Shape of data array: ', layer_init.shape)
+    idx = 76543  # temporary point in Pacific Ocean
+    lon, lat = ds.longitude[idx].values, ds.latitude[idx].values
+    time_idx = random.randint(0, len(ds.time) - 1)
+    specmat = np.zeros((len(ds.directionNumber), len(ds.frequencyNumber)))
+    for i in range(specmat.shape[0]):
+        for j in range(specmat.shape[1]):
+            specmat[i, j] = ds.d2fd[time_idx, i, j, idx].values
+    # layer_init = ds.d2fd[0]
+    # print('Shape of data array: ', layer_init.shape)
+    return specmat
 
 
 def mouse_move(event):
@@ -52,13 +61,14 @@ def mouse_move(event):
             print('Hs = {:.3} m'.format(Hs))
 
 
-def polar_plot():
+def polar_plot(spec_data):
     """ Plot the wave spectrum based on the data obtained from `read_spec`."""
-    pass
+    ax = plt.figure()
+    plt.pcolor(spec_data, cmap=plt.cm.coolwarm)
 
 
 
 if __name__ == '__main__':
-    read_spec_grib('spect.grib')
-    ds = read_file('integ.nc')      # 'integ.grib' 'integ.nc'
-    plot_integ(ds)
+    spec = read_spec_grib('spect.grib')
+    intg = read_file('integ.nc')      # 'integ.grib' 'integ.nc'
+    plot_integ(intg, spec)

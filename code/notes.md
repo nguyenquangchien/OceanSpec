@@ -239,6 +239,76 @@ Is `315258` associated with latitude and longitude?
 
 There is a discrepancy between the data density and geographical density.
 
+An irregular grid has been used. There are 315258 sampling locations on earth.
+
+```
+>>> ds
+<xarray.Dataset>
+Dimensions:          (time: 24, directionNumber: 24, frequencyNumber: 30, values: 315258)
+Coordinates:
+    number           int64 ...
+  * time             (time) datetime64[ns] 2022-03-01 ... 2022-03-01T23:00:00
+    step             timedelta64[ns] 00:00:00
+    meanSea          float64 0.0
+  * directionNumber  (directionNumber) int64 1 2 3 4 5 6 7 ... 19 20 21 22 23 24
+  * frequencyNumber  (frequencyNumber) int64 1 2 3 4 5 6 7 ... 25 26 27 28 29 30
+    latitude         (values) float64 ...
+    longitude        (values) float64 ...
+    valid_time       (time) datetime64[ns] ...
+Dimensions without coordinates: values
+Data variables:
+    d2fd             (time, directionNumber, frequencyNumber, values) float32 ...
+Attributes:
+    GRIB_edition:            1
+    GRIB_centre:             ecmf
+    GRIB_centreDescription:  European Centre for Medium-Range Weather Forecasts
+    GRIB_subCentre:          0
+    Conventions:             CF-1.7
+    institution:             European Centre for Medium-Range Weather Forecasts
+    history:                 2022-07-18T22:19 GRIB to CDM+CF via cfgrib-0.9.1...
+>>> idx = 9999
+>>> ds.longitude[idx].values
+array(37.84090909)
+>>> ds.longitude[idx].values + 2
+39.84090909090911
+>>> ds.latitude[idx].values
+array(69.48)
+>>> len(ds.d2fd)
+24
+>>> len(ds.d2fd[0])
+24
+>>> len(ds.d2fd[0][0][0])
+315258
+>>> ds.d2fd[0][0][0][idx].values
+array(nan, dtype=float32)
+>>> idx = 999
+>>> ds.d2fd[0][0][0][idx].values
+array(nan, dtype=float32)
+>>> idx = 2400
+>>> ds.d2fd[0][0][0][idx].values
+array(nan, dtype=float32)
+>>> idx = 9999
+>>> idx = 99999
+>>> ds.d2fd[0][0][0][idx].values
+array(nan, dtype=float32)
+>>> ds.longitude[idx].values, ds.latitude[idx].values
+(array(281.25), array(21.96))
+>>> idx = 34567
+>>> ds.longitude[idx].values, ds.latitude[idx].values
+(array(105.57692308), array(51.48))
+>>> ds.d2fd[0][10][10][idx].values
+array(nan, dtype=float32)
+>>> idx = 99999
+>>> ds.d2fd[0][10][10][idx].values
+array(nan, dtype=float32)
+>>> ds.d2fd[0][20][10][idx].values
+array(nan, dtype=float32)
+>>> idx = 76543
+>>> ds.longitude[idx].values, ds.latitude[idx].values
+(array(193.48946136), array(31.32))
+>>> ds.d2fd[0][20][10][idx].values
+array(-0.29671097, dtype=float32)
+```
 
 # Session Windows 10
 
