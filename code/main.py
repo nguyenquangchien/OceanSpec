@@ -28,7 +28,7 @@ def plot_integ(integ, spect):
     integ.swh[0].plot(cmap=plt.cm.coolwarm)
     global Hs_array
     Hs_array = integ.swh[0]
-    print('Shape of data array: ', Hs_array.shape)
+    print('Shape of wave height data array: ', Hs_array.shape)
     plt.connect('motion_notify_event', mouse_move)
     polar_plot(spect)
     plt.show()
@@ -38,7 +38,7 @@ def read_spec_grib(file_name):
     """ Read the spectral data from a GRIB file.
     """
     ds = read_file(file_name)
-    idx = 76543  # temporary point in Pacific Ocean
+    idx = 76543  # temporary point in the Pacific Ocean
     lon, lat = ds.longitude[idx].values, ds.latitude[idx].values
     time_idx = random.randint(0, len(ds.time) - 1)
     specmat = np.zeros((len(ds.directionNumber), len(ds.frequencyNumber)))
@@ -62,9 +62,33 @@ def mouse_move(event):
 
 
 def polar_plot(spec_data):
-    """ Plot the wave spectrum based on the data obtained from `read_spec`."""
-    ax = plt.figure()
-    plt.pcolor(spec_data, cmap=plt.cm.coolwarm)
+    """ Plot the wave spectrum based on the data obtained from `read_spec`.
+        Try imitating https://www.youtube.com/watch?v=DyPjsj6azY4 
+        and https://stackoverflow.com/a/9083017/4956603
+    """
+    # rlist = np.arange(0, 4.01, 0.01)
+    # thetalist = np.radians(np.arange(0, 361, 1))
+    # rmesh, thetamesh = np.meshgrid(rlist, thetalist)
+    # a = 1.5
+    # b = 2
+    # c = 2
+    # d = 1.6
+    # func = ((lambda t,a,b: a * np.sin(t*b))(thetamesh,a,b) * 
+    #         (lambda r,c,d: c * np.cos(r*d))(rmesh, c, d) )
+    # fig, ax = plt.subplots(subplot_kw=dict(projection='polar'))
+    # ax.contourf(thetamesh, rmesh, func, 100)
+
+    angles = np.radians(np.arange(7.5, 352.5 + 15, 15))
+    assert len(angles) == spec_data.shape[0]
+    n_freq_bins = spec_data.shape[1]
+    freqs = np.full(n_freq_bins, 0.03453) * (1.1 ** np.arange(0, n_freq_bins))
+    r, theta = np.meshgrid(freqs, angles)
+
+    fig, ax = plt.subplots(subplot_kw=dict(projection='polar'))
+    ax.contourf(theta, r, spec_data, 10)
+    
+
+    # plt.pcolor(spec_data, cmap=plt.cm.coolwarm)
 
 
 
