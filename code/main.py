@@ -45,8 +45,9 @@ def read_spec_grib(file_name):
     for i in range(specmat.shape[0]):
         for j in range(specmat.shape[1]):
             specmat[i, j] = ds.d2fd[time_idx, i, j, idx].values
-    # layer_init = ds.d2fd[0]
-    # print('Shape of data array: ', layer_init.shape)
+
+    specmat = 10 ** specmat
+    specmat = np.nan_to_num(specmat)
     return specmat
 
 
@@ -65,19 +66,9 @@ def polar_plot(spec_data):
     """ Plot the wave spectrum based on the data obtained from `read_spec`.
         Try imitating https://www.youtube.com/watch?v=DyPjsj6azY4 
         and https://stackoverflow.com/a/9083017/4956603
+        https://stackoverflow.com/questions/32462881/add-colorbar-to-existing-axis
+        https://stackoverflow.com/questions/15908371/matplotlib-colorbars-and-its-text-labels
     """
-    # rlist = np.arange(0, 4.01, 0.01)
-    # thetalist = np.radians(np.arange(0, 361, 1))
-    # rmesh, thetamesh = np.meshgrid(rlist, thetalist)
-    # a = 1.5
-    # b = 2
-    # c = 2
-    # d = 1.6
-    # func = ((lambda t,a,b: a * np.sin(t*b))(thetamesh,a,b) * 
-    #         (lambda r,c,d: c * np.cos(r*d))(rmesh, c, d) )
-    # fig, ax = plt.subplots(subplot_kw=dict(projection='polar'))
-    # ax.contourf(thetamesh, rmesh, func, 100)
-
     angles = np.radians(np.arange(7.5, 352.5 + 15, 15))
     assert len(angles) == spec_data.shape[0]
     n_freq_bins = spec_data.shape[1]
@@ -85,11 +76,10 @@ def polar_plot(spec_data):
     r, theta = np.meshgrid(freqs, angles)
 
     fig, ax = plt.subplots(subplot_kw=dict(projection='polar'))
-    ax.contourf(theta, r, spec_data, 10)
-    
-
-    # plt.pcolor(spec_data, cmap=plt.cm.coolwarm)
-
+    ctr = ax.contourf(theta, r, spec_data, 10, cmap='OrRd')
+    ax.set_xticklabels(['E', '', 'N', '', 'W', '', 'S', ''])
+    cbar = fig.colorbar(ctr, ax=ax)
+    cbar.set_label('Spectral density, m²s rad⁻¹', rotation=270)
 
 
 if __name__ == '__main__':

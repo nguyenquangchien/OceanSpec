@@ -10,7 +10,7 @@ __pycache__/
 *.nc
 
 # ECMWF library files
-code/ecmwflibs/bin/*
+./code/ecmwflibs/
 
 # files on Mac OS X
 ._*
