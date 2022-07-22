@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap
 
 
-
 def read_file(file_name):
     """ Reads data from a GRIB or netCDF file.
     """
@@ -29,8 +28,10 @@ def plot_integ(integ, spect):
     global Hs_array
     Hs_array = integ.swh[0]
     print('Shape of wave height data array: ', Hs_array.shape)
-    plt.connect('motion_notify_event', mouse_move)
-    polar_plot(spect)
+    binding_id = plt.connect('motion_notify_event', on_mousemove)
+    plt.connect('button_press_event', on_click)
+    global spectrum
+    spectrum = spect
     plt.show()
 
 
@@ -51,7 +52,7 @@ def read_spec_grib(file_name):
     return specmat
 
 
-def mouse_move(event):
+def on_mousemove(event):
     x, y = event.xdata, event.ydata
     global Hs_array
     if x is not None and y is not None:
@@ -60,6 +61,14 @@ def mouse_move(event):
         Hs = Hs_array[i][j].values
         if not np.isnan(Hs):
             print('Hs = {:.3} m'.format(Hs))
+
+
+def on_click(event):
+    if event.button is 1:  # left
+        x, y = event.xdata, event.ydata
+        print(f'click at {x}, {y}')
+        global spectrum
+        polar_plot(spectrum)
 
 
 def polar_plot(spec_data):
@@ -80,6 +89,7 @@ def polar_plot(spec_data):
     ax.set_xticklabels(['E', '', 'N', '', 'W', '', 'S', ''])
     cbar = fig.colorbar(ctr, ax=ax)
     cbar.set_label('Spectral density, m²s rad⁻¹', rotation=270)
+    fig.show()
 
 
 if __name__ == '__main__':
