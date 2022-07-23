@@ -27,19 +27,22 @@ def plot_integ(integ, spect):
     integ.swh[0].plot(cmap=plt.cm.coolwarm)
     global Hs_array
     Hs_array = integ.swh[0]
-    print('Shape of wave height data array: ', Hs_array.shape)
-    binding_id = plt.connect('motion_notify_event', on_mousemove)
-    plt.connect('button_press_event', on_click)
+    # print('Shape of wave height data array: ', Hs_array.shape)
+    # binding_id = plt.connect('motion_notify_event', on_mousemove)
+    # plt.connect('button_press_event', on_click)
     global spectrum
     spectrum = spect
-    plt.show()
+    # plt.show()
 
 
 def read_spec_grib(file_name):
     """ Read the spectral data from a GRIB file.
     """
     ds = read_file(file_name)
-    idx = 76543  # temporary point in the Pacific Ocean
+    return ds
+
+
+def spectral_matrix(ds, idx):
     lon, lat = ds.longitude[idx].values, ds.latitude[idx].values
     time_idx = random.randint(0, len(ds.time) - 1)
     specmat = np.zeros((len(ds.directionNumber), len(ds.frequencyNumber)))
@@ -50,6 +53,15 @@ def read_spec_grib(file_name):
     specmat = 10 ** specmat
     specmat = np.nan_to_num(specmat)
     return specmat
+
+
+def idx_grib_lat_lon(lat, lon):
+    """ Given latitude and longitude, return the corresponding index of the 
+        GRIB matrix.
+    """
+    DLON0 = 0.35756356  # longitude spacing at equator
+    # TODO: 
+    return 76543
 
 
 def on_mousemove(event):
@@ -93,6 +105,7 @@ def polar_plot(spec_data):
 
 
 if __name__ == '__main__':
-    spec = read_spec_grib('spect.grib')
+    ds = read_spec_grib('spect.grib')
     intg = read_file('integ.nc')      # 'integ.grib' 'integ.nc'
+    spec = spectral_matrix(ds, idx_grib_lat_lon(0, 0))
     plot_integ(intg, spec)
