@@ -472,6 +472,7 @@ In [26]: lats = [0.72, 31.32, 50.4, 63.72, 69.12, 78.12, 83.52]
 In [29]: ax = plt.scatter(lats, dlons); plt.grid(True); plt.xlabel('ϕ (°)'); plt
     ...: .ylabel('Δλ (°)'); plt.show()                                          
 
+# Ref https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.curve_fit.html 
 In [30]: from scipy.optimize import curve_fit                                   
 
 In [32]: import numpy as np                                                            
@@ -490,8 +491,11 @@ In [55]: ax = plt.scatter(lats, dlons); plt.grid(True); plt.xlabel('ϕ (°)'); p
     ...: opt), '-', color='orange', label='fit: Δλ = %.4f / cosϕ' % tuple(popt) 
     ...: ); plt.legend();  plt.show()                                           
 
-
 ```
+
+* The index 158792 correspond to location lon = 0 and lat = 0.
+* Latitude spacing Δϕ = 0.36°
+* Longitude spacing Δλ = 0.36°/cosϕ
 
 
 # Session Windows 10

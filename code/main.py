@@ -55,13 +55,42 @@ def spectral_matrix(ds, idx):
     return specmat
 
 
-def idx_grib_lat_lon(lat, lon):
-    """ Given latitude and longitude, return the corresponding index of the 
-        GRIB matrix.
+def mapping_dict(ds):
+    """ Creates dictionary `d` such that `d[(lon,lat)]` returns the index
+        of the location in the GRIB dataset. The dictionary is prepared
+        before the GUI event loop.
     """
-    DLON0 = 0.35756356  # longitude spacing at equator
-    # TODO: 
-    return 76543
+    IDX0  = 158792  # location Lat = 0, Lon = 0.
+    IDX_END = 315258
+    IDX_START = 0
+    DLON0 = 0.36  # 0.35756356  # longitude spacing at equator
+    DLAT  = 0.36  # equidistant
+
+    d = {}
+    lon = 0.0
+    lat = 0.0
+    idx = IDX0
+    count = 0  # count longitudinal steps
+    dlon = DLON0 / np.cos(np.radians(lat))
+
+    for idx in range(IDX0, IDX_END+1):
+        lon100 = int(round(lon*100))
+        lat100 = int(round(lat*100))
+        d[(lon100, lat100)] = idx
+        lon += dlon
+        if lon > 359.9:
+            # reset longitude and jump to the next latitude level
+            lon = 0.0
+            lat -= DLAT
+            dlon = DLON0 / np.cos(np.radians(lat))
+
+    # TODO: similar for northern hemisphere
+
+    print(len(d))
+    print(list(d.keys())[-10:])
+    assert d[(9000, -6912)] == 308003
+    
+    return d
 
 
 def on_mousemove(event):
@@ -107,5 +136,6 @@ def polar_plot(spec_data):
 if __name__ == '__main__':
     ds = read_spec_grib('spect.grib')
     intg = read_file('integ.nc')      # 'integ.grib' 'integ.nc'
-    spec = spectral_matrix(ds, idx_grib_lat_lon(0, 0))
+    table_lon_lat = mapping_dict(ds)
+    spec = spectral_matrix(ds, table_lon_lat[180, -69.12])
     plot_integ(intg, spec)
