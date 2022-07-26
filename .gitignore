@@ -10,7 +10,10 @@ __pycache__/
 *.nc
 
 # ECMWF library files
-./code/ecmwflibs/
+ecmwflibs/
+bin/
+share/
+pyvenv.cfg
 
 # files on Mac OS X
 ._*

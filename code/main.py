@@ -15,8 +15,9 @@ def read_file(file_name):
     return ds
 
 
-def plot_integ(integ, spect):
+def plot_integ(integ):
     """ Plot a map of the integrated wave properties.
+        Previously the function takes two arguments: integ and spect
     """
     map = Basemap(projection='cyl',lon_0=180,lat_0=0,
                   resolution='c', area_thresh = 50, 
@@ -29,9 +30,9 @@ def plot_integ(integ, spect):
     Hs_array = integ.swh[0]
     # print('Shape of wave height data array: ', Hs_array.shape)
     # binding_id = plt.connect('motion_notify_event', on_mousemove)
-    # plt.connect('button_press_event', on_click)
-    global spectrum
-    spectrum = spect
+    plt.connect('button_press_event', on_click)
+    # global spectrum
+    # spectrum = spect
     # plt.show()
 
 
@@ -56,26 +57,31 @@ def spectral_matrix(ds, idx):
 
 
 def mapping_dict(ds):
-    """ Creates dictionary `d` such that `d[(lon,lat)]` returns the index
-        of the location in the GRIB dataset. The dictionary is prepared
+    """ Creates dictionary `d` such that `d[(lon100,lat100)]` returns the index
+        of the location in the GRIB dataset. Here we use lon100 and lat100
+        which are longitude*100 and latitude*100, to avoid floating point
+        comparison errors.
+        
+        The dictionary is prepared
         before the GUI event loop.
     """
     IDX0  = 158792  # location Lat = 0, Lon = 0.
-    IDX_END = 315258
     IDX_START = 0
+    IDX_END = 315258
+    assert ds.d2fd[5][3][2].values.shape[0] == IDX_END
+    
     DLON0 = 0.36  # 0.35756356  # longitude spacing at equator
     DLAT  = 0.36  # equidistant
 
-    d = {}
+    d = {(0, 900): IDX0}    # singularity point - north pole
+
+    # For the southern hemisphere
     lon = 0.0
     lat = 0.0
-    idx = IDX0
-    count = 0  # count longitudinal steps
     dlon = DLON0 / np.cos(np.radians(lat))
-
     for idx in range(IDX0, IDX_END+1):
-        lon100 = int(round(lon*100))
-        lat100 = int(round(lat*100))
+        lon100 = round(lon*100)
+        lat100 = round(lat*100)
         d[(lon100, lat100)] = idx
         lon += dlon
         if lon > 359.9:
@@ -84,7 +90,21 @@ def mapping_dict(ds):
             lat -= DLAT
             dlon = DLON0 / np.cos(np.radians(lat))
 
-    # TODO: similar for northern hemisphere
+    # Similar for the northern hemisphere
+    lon = 0.0
+    lat = 89.64
+    dlon = DLON0 / np.cos(np.radians(lat))
+    for idx in range(IDX_START, IDX0):
+        lon100 = round(lon*100)
+        lat100 = round(lat*100)
+        d[(lon100, lat100)] = idx
+        lon += dlon
+        if lon > 359.9:
+            # reset longitude and jump to the next latitude level
+            lon = 0.0
+            lat -= DLAT
+            dlon = DLON0 / np.cos(np.radians(lat))
+
 
     print(len(d))
     print(list(d.keys())[-10:])
@@ -138,4 +158,4 @@ if __name__ == '__main__':
     intg = read_file('integ.nc')      # 'integ.grib' 'integ.nc'
     table_lon_lat = mapping_dict(ds)
     spec = spectral_matrix(ds, table_lon_lat[180, -69.12])
-    plot_integ(intg, spec)
+    plot_integ(intg)  # previously plot_integ(intg, spec)

@@ -21,6 +21,10 @@ E(f,θ) = E(f) D(θ)
 
 An example case (energy density distribution of a random sea state according to a Jonswap frequency spectrum and cosm directional distribution with m = 20 with a peak frequency of 0.1 Hz and a peak direction of 0°.)
 
+A real case of frequency spectrum and directional spectrum is shown in the following figure:
+
+![Figure of wave spectra observed at Grays Harbor, Washington, USA](fig/wave_spectra_Grays_Harbor_WA.png)
+> Frequency and directional wave spectra observed observed at Grays Harbor, Washington, USA (Masselink et al. eds 2014)
 
 ## ECMWF data products
 
@@ -31,8 +35,8 @@ ECMWF has data for deriving wave spectrum. The SAR data is collected from ERS-1,
 
 The earlier researches, wave spectra are usually shown as E(f), showing a change of spectrum shape in a coastal transect (being natural or in a laboratory).
 
-![Figure of wave spectra observed offshore Sylt](fig/spectrum_Sylt.png)
-> Wave spectra observed offshore Sylt (Carter 1988)
+![Figure of wave spectra observed in North Sea](fig/spectra_Jonswap_North_Sea.png)
+> Wave spectra observed observed in North Sea. Note the wind direction. (Masselink et al. eds 2014)
 
 ![The NW transect of Roi-Namur island](fig/Roi-Namur_island.png) 
 ![Wave spectra at NW1-5 locations](fig/spectra_Roi-Namur.png)
