@@ -66,14 +66,15 @@ def mapping_dict(ds):
         before the GUI event loop.
     """
     IDX0  = 158792  # location Lat = 0, Lon = 0.
-    IDX_START = 0
+    IDX_START = 2   # location Lat = 89.64, Lon = 0.
     IDX_END = 315258
     assert ds.d2fd[5][3][2].values.shape[0] == IDX_END
     
     DLON0 = 0.36  # 0.35756356  # longitude spacing at equator
     DLAT  = 0.36  # equidistant
 
-    d = {(0, 900): IDX0}    # singularity point - north pole
+    d = {(0, 900): 0}    # singularity point - north pole
+    d = {(1800, 900): 1}    # another singularity point - north pole
 
     # For the southern hemisphere
     lon = 0.0
@@ -84,11 +85,14 @@ def mapping_dict(ds):
         lat100 = round(lat*100)
         d[(lon100, lat100)] = idx
         lon += dlon
-        if lon > 359.9:
+        if lon > 359.8:
             # reset longitude and jump to the next latitude level
             lon = 0.0
             lat -= DLAT
             dlon = DLON0 / np.cos(np.radians(lat))
+
+    assert d[(0, -36)] == IDX0 + 1000
+    # assert d[(9000, -6912)] == 308003
 
     # Similar for the northern hemisphere
     lon = 0.0
@@ -105,10 +109,12 @@ def mapping_dict(ds):
             lat -= DLAT
             dlon = DLON0 / np.cos(np.radians(lat))
 
-
+    assert d[(0, 8964)] == IDX_START
+    assert d[(0, 8928)] == IDX_START + 6
+    assert d[(0, 0)] == IDX0
+    
     print(len(d))
     print(list(d.keys())[-10:])
-    assert d[(9000, -6912)] == 308003
     
     return d
 
