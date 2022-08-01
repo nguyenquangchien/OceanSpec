@@ -1,3 +1,5 @@
+import os
+import pickle
 import random
 import numpy as np
 import xarray as xr
@@ -33,7 +35,7 @@ def plot_integ(integ):
     plt.connect('button_press_event', on_click)
     # global spectrum
     # spectrum = spect
-    # plt.show()
+    plt.show()
 
 
 def read_spec_grib(file_name):
@@ -62,14 +64,39 @@ def mapping_dict(ds):
         which are longitude*100 and latitude*100, to avoid floating point
         comparison errors.
         
-        The dictionary is prepared
-        before the GUI event loop.
+        The dictionary is prepared before the GUI event loop.
+        This is the explicit way of mapping the locations to the indices.
+    """
+    IDX_START = 0   # location Lat = 90.0, Lon = 0.0
+    IDX_END = 315258
+    assert ds.d2fd[5][3][2].values.shape[0] == IDX_END
+
+    d = {}
+    for i in range(IDX_START, IDX_END):
+        if i % 10000 == 0:
+            print(f'{i}/{IDX_END}')
+        lon, lat = ds.longitude[i].values, ds.latitude[i].values
+        d[(round(lon*100), round(lat*100))] = i
+    
+    assert d[(6000,  8964)] == 3
+    assert d[(9050, -6876)] == 307643
+    assert d[(9000, -6912)] == 308003
+    assert d[(9000, -6948)] == 308358
+
+
+    return d
+
+def mapping_dict_formulate(ds):
+    """ Creates dictionary `d` such that `d[(lon100,lat100)]` returns the index
+        of the location in the GRIB dataset. Here we use lon100 and lat100.
+        
+        This way uses formulation to create the dictionary.
+        For the explicit way, see mapping_dict.
     """
     IDX0  = 158792  # location Lat = 0, Lon = 0.
     IDX_START = 2   # location Lat = 89.64, Lon = 0.
     IDX_END = 315258
     assert ds.d2fd[5][3][2].values.shape[0] == IDX_END
-    
     DLON0 = 0.36  # 0.35756356  # longitude spacing at equator
     DLAT  = 0.36  # equidistant
 
@@ -79,7 +106,7 @@ def mapping_dict(ds):
     # For the southern hemisphere
     lon = 0.0
     lat = 0.0
-    dlon = DLON0 / np.cos(np.radians(lat))
+    dlon = DLON0 / np.cos(np.radians(lat))  # incorrect, needs to search explicit ds.longitude[idx].values to find out the spacing corresponding to each latitude
     for idx in range(IDX0, IDX_END+1):
         lon100 = round(lon*100)
         lat100 = round(lat*100)
@@ -97,17 +124,20 @@ def mapping_dict(ds):
     # Similar for the northern hemisphere
     lon = 0.0
     lat = 89.64
-    dlon = DLON0 / np.cos(np.radians(lat))
+    dlon = DLON0 / np.cos(np.radians(lat))  # incorrect, needs to search explicit ds.longitude[idx].values to find out the spacing corresponding to each latitude
     for idx in range(IDX_START, IDX0):
         lon100 = round(lon*100)
         lat100 = round(lat*100)
         d[(lon100, lat100)] = idx
+        if lat100 > 8856:
+            print(lon100, lat100, '->', d[(lon100, lat100)], end='  ')
         lon += dlon
         if lon > 359.9:
             # reset longitude and jump to the next latitude level
             lon = 0.0
             lat -= DLAT
             dlon = DLON0 / np.cos(np.radians(lat))
+            
 
     assert d[(0, 8964)] == IDX_START
     assert d[(0, 8928)] == IDX_START + 6
@@ -134,7 +164,12 @@ def on_click(event):
     if event.button is 1:  # left
         x, y = event.xdata, event.ydata
         print(f'click at {x}, {y}')
-        global spectrum
+        lon100 = round(x*100)
+        lat100 = round(y*100)
+
+        global table_lon_lat
+        # TODO: approximate location here
+        spectrum = spectral_matrix(ds, table_lon_lat[lon100, lat100])
         polar_plot(spectrum)
 
 
@@ -162,6 +197,11 @@ def polar_plot(spec_data):
 if __name__ == '__main__':
     ds = read_spec_grib('spect.grib')
     intg = read_file('integ.nc')      # 'integ.grib' 'integ.nc'
-    table_lon_lat = mapping_dict(ds)
-    spec = spectral_matrix(ds, table_lon_lat[180, -69.12])
+    global table_lon_lat
+    if os.path.exists('table_lon_lat.pickle'):
+        with open('mapping.pickle', 'rb') as f:
+            table_lon_lat = pickle.load(f)
+    else:
+        table_lon_lat = mapping_dict(ds)
+    
     plot_integ(intg)  # previously plot_integ(intg, spec)
