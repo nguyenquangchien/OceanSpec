@@ -46,12 +46,11 @@ def read_spec_grib(file_name):
 
 
 def spectral_matrix(ds, idx):
-    lon, lat = ds.longitude[idx].values, ds.latitude[idx].values
-    time_idx = random.randint(0, len(ds.time) - 1)
+    time_idx = 0
     specmat = np.zeros((len(ds.directionNumber), len(ds.frequencyNumber)))
     for i in range(specmat.shape[0]):
         for j in range(specmat.shape[1]):
-            specmat[i, j] = ds.d2fd[time_idx, i, j, idx].values
+            specmat[i, j] = ds.d2fd[time_idx][i][j][idx].values
 
     specmat = 10 ** specmat
     specmat = np.nan_to_num(specmat)
@@ -68,8 +67,7 @@ def mapping_dict(ds):
         This is the explicit way of mapping the locations to the indices.
     """
     IDX_START = 0   # location Lat = 90.0, Lon = 0.0
-    IDX_COUNT = 315258
-    assert ds.d2fd[5][3][2].values.shape[0] == IDX_COUNT
+    IDX_COUNT = ds.d2fd[0][0][0].values.shape[0]  # 315258
 
     d = {}
     tags = []
@@ -90,8 +88,12 @@ def mapping_dict(ds):
     assert d[(9000, -6912)] == 308003
     assert d[(9000, -6948)] == 308358
 
+    assert tags[-1][2] == -78.12    # southernmost latitude
+    assert tags[-2][2] - tags[-1][2] == 0.36    # latitude spacing
+    assert tags[-2][2] < tags[-1][2]    # longitude spacing
 
     return d, tags
+
 
 def mapping_dict_formulate(ds):
     """ Creates dictionary `d` such that `d[(lon100,lat100)]` returns the index
@@ -170,23 +172,20 @@ def on_mousemove(event):
 def on_click(event):
     if event.button is 1:  # left
         x, y = event.xdata, event.ydata
-        print(f'click at {x}, {y}')
-        lon100 = round(x*100)
-        lat100 = round(y*100)
-
-        global table_lon_lat
-        global tags
+        print(f'click at lon {x:.5}, lat {y:.3}')
+        
+        global table_lon_lat, tags
         
         DLAT = 0.36
         latrow = round((90 - y) / DLAT)    # scanning by latitude
         idx = tags[latrow][1]
-        delta_lon = tags[latrow][2]
+        delta_lon = tags[latrow][3]
         x_adj = 0 if x > 360 - 0.5 * delta_lon else x
-        lonrow = round(x_adj / delta_lon)
-        idx += lonrow
-
-        # then no need to use table_lon_lat?
-        spectrum = spectral_matrix(ds, idx)
+        loncol = round(x_adj / delta_lon)
+        idx += loncol
+        print(f'Fetch data at latitude row {latrow}, longitude column {loncol}, index {idx}')
+        spectrum = spectral_matrix(ds, idx) 
+        # no need to use table_lon_lat?
         # spectrum = spectral_matrix(ds, table_lon_lat[lon100, lat100])
         polar_plot(spectrum)
 
@@ -211,27 +210,20 @@ def polar_plot(spec_data):
     cbar.set_label('Spectral density, m²s rad⁻¹', rotation=270)
     fig.show()
 
-def read_pickle(filename='table_lon_lat.pickle'):
-    """ Reads a pickle file.
-    """
-    with open(filename, 'rb') as f:
-        return pickle.load(f)
 
 if __name__ == '__main__':
     ds = read_spec_grib('spect.grib')
     intg = read_file('integ.nc')      # 'integ.grib' 'integ.nc'
-    global table_lon_lat
-    global tags
-    # table_lon_lat, tags = mapping_dict(ds)
-    # if os.path.exists('table_lon_lat.pickle'):
-    #     with open('table_lon_lat.pickle', 'rb') as f:
-    #         table_lon_lat = pickle.load(f)
-    # else:
-    #     table_lon_lat = mapping_dict(ds)
-    with open('table_lon_lat.pickle', 'rb') as f:
-        table_lon_lat = pickle.load(f)
-    with open('tags.pkl', 'rb') as f:
-        tags = pickle.load(f)
-
-
+    print('Finished reading files GRIB (spectra) and netCDF (integral quantities).')
+    
+    global table_lon_lat, tags
+    
+    if os.path.exists('table_lon_lat.pickle'):
+        with open('table_lon_lat.pickle', 'rb') as f:
+            table_lon_lat = pickle.load(f)
+        with open('tags.pkl', 'rb') as f:
+            tags = pickle.load(f)
+    else:
+        table_lon_lat, tags = mapping_dict(ds)
+    
     plot_integ(intg)  # previously plot_integ(intg, spec)
