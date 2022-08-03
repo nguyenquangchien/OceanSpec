@@ -497,6 +497,30 @@ In [55]: ax = plt.scatter(lats, dlons); plt.grid(True); plt.xlabel('ϕ (°)'); p
 * Latitude spacing Δϕ = 0.36°
 * Longitude spacing Δλ = 0.36°/cosϕ
 
+# Building table long lat for fast retrieval
+
+Function `table_lon_lat`
+
+along with the creation of `tags` saved into a `pickle` file:
+
+```
+>>> newtags = []
+>>> count = 0
+>>> for t in tags:
+...     _, idx, lat, dlon = t
+...     newtags.append((count, idx, round(lat+0.0,2), dlon+0.0))
+...     count += 1
+
+>>> newtags
+[(0, 0, 90.0, 180.0), (1, 2, 89.64, 60.0), (2, 8, 89.28, 25.714285714285715), (3, 22, 88.92, 18.0), (4, 42, 88.56, 13.846153846153847), (5, 68, 88.2, 11.25), (6, 100, 87.84, 9.473684210526315), ... ]
+
+>>> with open('tags.pkl', 'wb') as openfile:
+...     pickle.dump(newtags, openfile, protocol=pickle.HIGHEST_PROTOCOL)
+```
+
+* Find latitude index = round((90 - lat)/0.36)
+* Adjust longitude = 0 if longitude > 360 - 0.5*delta_lon
+* index = index + round(adjsut_lon / delta_lon)
 
 # Session Windows 10
 

@@ -68,15 +68,22 @@ def mapping_dict(ds):
         This is the explicit way of mapping the locations to the indices.
     """
     IDX_START = 0   # location Lat = 90.0, Lon = 0.0
-    IDX_END = 315258
-    assert ds.d2fd[5][3][2].values.shape[0] == IDX_END
+    IDX_COUNT = 315258
+    assert ds.d2fd[5][3][2].values.shape[0] == IDX_COUNT
 
     d = {}
-    for i in range(IDX_START, IDX_END):
+    tags = []
+    count = 0
+    for i in range(IDX_START, IDX_COUNT):
         if i % 10000 == 0:
-            print(f'{i}/{IDX_END}')
+            print(f'{i}/{IDX_COUNT}')
         lon, lat = ds.longitude[i].values, ds.latitude[i].values
         d[(round(lon*100), round(lat*100))] = i
+        if lon == 0:
+            assert i < IDX_COUNT - 1    # last index cannot have lon = 0
+            newlon = ds.longitude[i+1].values
+            tags.append((count, i, lat, newlon))  # store location where a new latitude starts together with the longitude spacing
+            count += 1
     
     assert d[(6000,  8964)] == 3
     assert d[(9050, -6876)] == 307643
@@ -84,7 +91,7 @@ def mapping_dict(ds):
     assert d[(9000, -6948)] == 308358
 
 
-    return d
+    return d, tags
 
 def mapping_dict_formulate(ds):
     """ Creates dictionary `d` such that `d[(lon100,lat100)]` returns the index
@@ -168,8 +175,19 @@ def on_click(event):
         lat100 = round(y*100)
 
         global table_lon_lat
-        # TODO: approximate location here
-        spectrum = spectral_matrix(ds, table_lon_lat[lon100, lat100])
+        global tags
+        
+        DLAT = 0.36
+        latrow = round((90 - y) / DLAT)    # scanning by latitude
+        idx = tags[latrow][1]
+        delta_lon = tags[latrow][2]
+        x_adj = 0 if x > 360 - 0.5 * delta_lon else x
+        lonrow = round(x_adj / delta_lon)
+        idx += lonrow
+
+        # then no need to use table_lon_lat?
+        spectrum = spectral_matrix(ds, idx)
+        # spectrum = spectral_matrix(ds, table_lon_lat[lon100, lat100])
         polar_plot(spectrum)
 
 
@@ -193,15 +211,27 @@ def polar_plot(spec_data):
     cbar.set_label('Spectral density, m²s rad⁻¹', rotation=270)
     fig.show()
 
+def read_pickle(filename='table_lon_lat.pickle'):
+    """ Reads a pickle file.
+    """
+    with open(filename, 'rb') as f:
+        return pickle.load(f)
 
 if __name__ == '__main__':
     ds = read_spec_grib('spect.grib')
     intg = read_file('integ.nc')      # 'integ.grib' 'integ.nc'
     global table_lon_lat
-    if os.path.exists('table_lon_lat.pickle'):
-        with open('mapping.pickle', 'rb') as f:
-            table_lon_lat = pickle.load(f)
-    else:
-        table_lon_lat = mapping_dict(ds)
-    
+    global tags
+    # table_lon_lat, tags = mapping_dict(ds)
+    # if os.path.exists('table_lon_lat.pickle'):
+    #     with open('table_lon_lat.pickle', 'rb') as f:
+    #         table_lon_lat = pickle.load(f)
+    # else:
+    #     table_lon_lat = mapping_dict(ds)
+    with open('table_lon_lat.pickle', 'rb') as f:
+        table_lon_lat = pickle.load(f)
+    with open('tags.pkl', 'rb') as f:
+        tags = pickle.load(f)
+
+
     plot_integ(intg)  # previously plot_integ(intg, spec)
