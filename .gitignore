@@ -11,8 +11,8 @@ __pycache__/
 
 # ECMWF library files
 ecmwflibs/
-bin/
-share/
+ecmwflibs/bin/
+ecmwflibs/share/
 pyvenv.cfg
 
 # files on Mac OS X

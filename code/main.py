@@ -27,11 +27,13 @@ def plot_integ(integ):
     map.drawcoastlines(linewidth=0.25)
     map.drawmeridians(np.arange(0, 361, 30))
     map.drawparallels(np.arange(-90, 91, 30))
-    integ.swh[0].plot(cmap=plt.cm.coolwarm)
+
     global Hs_array
     Hs_array = integ.swh[0]
+    Hs_array.plot(cmap=plt.cm.coolwarm)
+    # cbar = map.colorbar(shrink=.5, aspect=15, pad=.05)
     # print('Shape of wave height data array: ', Hs_array.shape)
-    # binding_id = plt.connect('motion_notify_event', on_mousemove)
+    binding_id = plt.connect('motion_notify_event', on_mousemove)
     plt.connect('button_press_event', on_click)
     # global spectrum
     # spectrum = spect
@@ -170,7 +172,7 @@ def on_mousemove(event):
 
 
 def on_click(event):
-    if event.button is 1:  # left
+    if event.button == 1:  # left
         x, y = event.xdata, event.ydata
         print(f'click at lon {x:.5}, lat {y:.3}')
         
@@ -184,7 +186,8 @@ def on_click(event):
         loncol = round(x_adj / delta_lon)
         idx += loncol
         print(f'Fetch data at latitude row {latrow}, longitude column {loncol}, index {idx}')
-        spectrum = spectral_matrix(ds, idx) 
+        # spectrum = spectral_matrix(ds, idx)  # slicing directly from spec_cube instead
+        spectrum = spec_cube[:, :, idx]
         # no need to use table_lon_lat?
         # spectrum = spectral_matrix(ds, table_lon_lat[lon100, lat100])
         polar_plot(spectrum)
@@ -208,6 +211,7 @@ def polar_plot(spec_data):
     ax.set_xticklabels(['E', '', 'N', '', 'W', '', 'S', ''])
     cbar = fig.colorbar(ctr, ax=ax)
     cbar.set_label('Spectral density, m²s rad⁻¹', rotation=270)
+    print('Done')
     fig.show()
 
 
@@ -226,4 +230,9 @@ if __name__ == '__main__':
     else:
         table_lon_lat, tags = mapping_dict(ds)
     
+    # trying to transform spectral data in advance
+    spec_cube = np.zeros((len(ds.directionNumber), len(ds.frequencyNumber), 315258))
+    spec_cube = np.nan_to_num(10**ds.d2fd[0])
+    print(f"Size of spec_cube: {spec_cube.shape}")
+
     plot_integ(intg)  # previously plot_integ(intg, spec)
