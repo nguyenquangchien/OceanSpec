@@ -19,6 +19,7 @@ pyvenv.cfg
 ._*
 
 # backup files
+*bak*.py
 *BAK.*
 *.bak
 *copy.py
