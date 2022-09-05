@@ -79,7 +79,7 @@ def on_mousemove(event):
 
 
 def on_click(event):
-    if event.button == 1:  # left
+    if event.button == 2:  # right
         x, y = event.xdata, event.ydata
         print(f'click at lon {x:.5}, lat {y:.3}')
         
@@ -93,6 +93,8 @@ def on_click(event):
         idx += loncol
         print(f'Fetch data at latitude row {latrow}, longitude column {loncol}, index {idx}')
         spectrum = spec_cube[:, :, idx]
+        if not precompute:
+            spectrum = np.nan_to_num(10**spectrum)
         polar_plot(spectrum)
 
 
@@ -123,6 +125,7 @@ def polar_plot(spec_data):
 
 
 if __name__ == '__main__':
+    precompute = False
     ds = read_file('spect.grib')
     intg = read_file('integ.nc')      # either 'integ.grib' or 'integ.nc'
     print('Finished reading files GRIB (spectra) and netCDF (integral quantities).')
@@ -137,7 +140,10 @@ if __name__ == '__main__':
     
     # transform spectral data in advance
     spec_cube = np.zeros((len(ds.directionNumber), len(ds.frequencyNumber), 315258))
-    spec_cube = np.nan_to_num(10**ds.d2fd[0])
+    if precompute:
+        spec_cube = np.nan_to_num(10**ds.d2fd[0])
+    else:
+        spec_cube = ds.d2fd[0]
     print(f"Size of spec_cube: {spec_cube.shape}")
 
     plot_integ(intg)
