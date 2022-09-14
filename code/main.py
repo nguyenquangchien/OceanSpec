@@ -43,9 +43,12 @@ def plot_integ(integ):
     map.drawmeridians(np.arange(0, 361, 30))
     map.drawparallels(np.arange(-90, 91, 30))
 
-    global Hs_array, Dm_array
+    global Hs_array, Dm_array, Bathy_array, date_time
     Hs_array = integ.swh[0]
     Dm_array = integ.mwd[0]
+    Bathy_array = integ.wmb[0]
+    date_time = integ.time[0].values  # '2022-03-01 00:00'
+
     ax = Hs_array.plot(cmap=plt.cm.coolwarm)
     # ax.colorbar(fraction=0.046, pad=0.04)
     # TODO: minimise the color bar # cbar = map.colorbar(shrink=.5, aspect=15, pad=.05)
@@ -69,6 +72,7 @@ def mapping_dict(ds):
 
     tags = []
     count = 0
+    print('Mapping location, may take some time ...')
     for i in range(IDX_START, IDX_COUNT):
         if i % 10000 == 0:
             print(f'{i}/{IDX_COUNT}')
@@ -87,42 +91,61 @@ def mapping_dict(ds):
     return tags
 
 
+def data_from_xy(x, y):
+    """ Extract wave data from location on map.
+        :param: `x` (int) longitude
+        :param: `y` (int) latitude
+    """
+    i = int(-y * 2 + 180)
+    j = int(x * 2)
+    Hs = Hs_array[i][j].values
+    Dm = Dm_array[i][j].values
+    bathy = Bathy_array[i][j].values
+    return Hs, Dm, bathy
+
+
 def on_mousemove(event):
+    ''' Callback tracing the mouse cursor movement on the map.
+        Prints the wave information on the map.
+    '''
     x, y = event.xdata, event.ydata
-    global Hs_array
     if x is not None and y is not None:
-        i = int(-y * 2 + 180)
-        j = int(x * 2)
-        Hs = Hs_array[i][j].values
-        Dm = Dm_array[i][j].values
+        Hs, Dm, bathy = data_from_xy(x, y)
         if not np.isnan(Hs):
-            print('Hs = {:.3} m,  Dm = {} deg'.format(Hs, Dm))
+            print(f'Hs = {Hs:.{2}f} m,  Dm = {Dm:.{1}f} °,  Bathy = {bathy:.{1}f} m')
 
 
 def on_click(event):
+    ''' Callback on right mouse click. 
+        Shows a polar plot for the wave spectrum.
+    '''
     if event.button == 3:  # right
         x, y = event.xdata, event.ydata
-        print(f'click at lon {x:.5}, lat {y:.3}')
-        
-        global tags
-        DLAT = 0.36
-        latrow = round((90 - y) / DLAT)    # scanning by latitude
-        idx = tags[latrow][1]
-        delta_lon = tags[latrow][3]
-        x_adj = 0 if x > 360 - 0.5 * delta_lon else x
-        loncol = round(x_adj / delta_lon)
-        idx += loncol
-        print(f'Fetch data at latitude row {latrow}, longitude column {loncol}, index {idx}')
-        spectrum = spec_cube[:, :, idx]
-        if not precompute:
-            spectrum = np.nan_to_num(10**spectrum)
-        polar_plot(spectrum, (x, y))
+        if x is not None and y is not None:
+            print(f'clicked at lon {x:.{2}f}°, lat {y:.{2}f}°')
+            
+            Hs, Dm, bathy = data_from_xy(x, y)
+            global tags
+            DLAT = 0.36
+            latrow = round((90 - y) / DLAT)    # scanning by latitude
+            idx = tags[latrow][1]
+            delta_lon = tags[latrow][3]
+            x_adj = 0 if x > 360 - 0.5 * delta_lon else x
+            loncol = round(x_adj / delta_lon)
+            idx += loncol
+            print(f'Fetch data at latitude row {latrow}, longitude column {loncol}, index {idx}')
+            spectrum = spec_cube[:, :, idx]
+            if not precompute:
+                spectrum = np.nan_to_num(10**spectrum)
+            dict_info = {'long': x, 'lat': y, 'wvht': Hs, 'wvdir': Dm, 'depth': bathy}
+            polar_plot(spectrum, dict_info)
 
 
-def polar_plot(spec_data, loca):
+def polar_plot(spec_data, info):
     """ Plot the wave spectrum based on the data obtained from `read_spec`.
         `spect_data` is an array
-        `loca` is a tuple of long and lat
+        `info` is a dictionary containing various information
+            (long, lat, wave height, wave direction, depth)
         Following https://www.youtube.com/watch?v=DyPjsj6azY4 
         and https://stackoverflow.com/a/9083017/4956603
         https://stackoverflow.com/questions/32462881/add-colorbar-to-existing-axis
@@ -142,8 +165,17 @@ def polar_plot(spec_data, loca):
     fig, ax = plt.subplots(subplot_kw=dict(projection='polar'), figsize=(4,4))
     ctr = ax.contourf(theta, r, spec_data, 10, cmap='OrRd')
     # ctr = ax.contourf(theta, r, spec_data, 10, cmap='OrRd', vmin=0, vmax=100)
-    ax.set_xticklabels(['E', '', 'N', '', 'W', '', 'S', ''])
-    ax.set_title(f'Wave spectrum at location\nlon {loca[0]:.5}, lat {loca[1]:.3}')
+    ax.set_xticklabels(['N', '', 'E', '', 'S', '', 'W', ''])
+    ax.set_theta_direction(-1)
+    ax.set_theta_zero_location('N')
+
+    long, lat, wvht, wvdir, depth = (info['long'], info['lat'],
+                                    info['wvht'], info['wvdir'], info['depth'])
+    ax.set_title(f'''Wave spectrum at location
+    lon {long:.{2}f}°, lat {lat:.{2}f}°
+    time {date_time}
+    wave height {wvht:.{2}f} m, direction {wvdir:.{1}f} °''')
+    plt.rc('figure', titlesize=10)
     cbar = fig.colorbar(ctr, ax=ax)
     # ax.set_clim(0, 100)
     cbar.set_label('Spectral density, m²s rad⁻¹', rotation=270)
@@ -155,14 +187,14 @@ def polar_plot(spec_data, loca):
 
 if __name__ == '__main__':
     precompute = True      # False for system with small memory
-    ds = read_file('spect.grib')
-    intg = read_file('integ.nc')      # either 'integ.grib' or 'integ.nc'
+    ds = read_file('code/spect.grib')
+    intg = read_file('code/integ.nc')      # either 'integ.grib' or 'integ.nc'
     print('Finished reading files GRIB (spectra) and netCDF (integral quantities).')
     
     global tags
     
-    if os.path.exists('tags.pkl'):
-        with open('tags.pkl', 'rb') as f:
+    if os.path.exists('code/tags.pkl'):
+        with open('code/tags.pkl', 'rb') as f:
             tags = pickle.load(f)
     else:
         tags = mapping_dict(ds)
