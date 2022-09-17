@@ -1,4 +1,5 @@
 import os
+import psutil
 import pickle
 import matplotlib
 import numpy as np
@@ -49,9 +50,12 @@ def plot_integ(integ):
     Bathy_array = integ.wmb[0]
     date_time = integ.time[0].values  # '2022-03-01 00:00'
 
+    # fig, ax = plt.subplots()
+    # ax.pcolor(Hs_array, cmap=plt.cm.coolwarm)
     ax = Hs_array.plot(cmap=plt.cm.coolwarm)
     # ax.colorbar(fraction=0.046, pad=0.04)
     # TODO: minimise the color bar # cbar = map.colorbar(shrink=.5, aspect=15, pad=.05)
+    plt.annotate('Right click to show wave spectrum', (0, -100))
     plt.connect('motion_notify_event', on_mousemove)
     plt.connect('button_press_event', on_click)
     plt.tight_layout()
@@ -186,9 +190,12 @@ def polar_plot(spec_data, info):
 
 
 if __name__ == '__main__':
-    precompute = True      # False for system with small memory
+    ram_bytes = psutil.virtual_memory().total  # https://stackoverflow.com/a/22103295
+    precompute = ram_bytes > 8_000_000_000      # about 8 GB RAM
     ds = read_file('code/spect.grib')
     intg = read_file('code/integ.nc')      # either 'integ.grib' or 'integ.nc'
+    intg['swh']['long_name'] = 'Significant wave height'  # To make better plot
+
     print('Finished reading files GRIB (spectra) and netCDF (integral quantities).')
     
     global tags
@@ -205,6 +212,5 @@ if __name__ == '__main__':
         spec_cube = np.nan_to_num(10**ds.d2fd[0])
     else:
         spec_cube = ds.d2fd[0]
-    print(f"Size of spec_cube: {spec_cube.shape}")
 
     plot_integ(intg)
