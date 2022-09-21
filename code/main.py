@@ -1,4 +1,5 @@
 import os
+from turtle import update
 import psutil
 import pickle
 import matplotlib
@@ -6,6 +7,7 @@ import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt 
 from mpl_toolkits.basemap import Basemap
+from matplotlib.widgets import Slider, Button
 
 
 def read_file(file_name):
@@ -37,6 +39,7 @@ def plot_integ(integ):
         Parameter: `integ` - a dataset.
         https://stackoverflow.com/a/26720422/
     """
+    plt.figure(figsize=(8, 4))
     map = Basemap(projection='cyl',lon_0=180,lat_0=0,
                   resolution='c', area_thresh = 50, 
                   llcrnrlon=0, llcrnrlat=-89, urcrnrlon=360, urcrnrlat=89)
@@ -52,10 +55,11 @@ def plot_integ(integ):
 
     # fig, ax = plt.subplots()
     # ax.pcolor(Hs_array, cmap=plt.cm.coolwarm)
-    ax = Hs_array.plot(cmap=plt.cm.coolwarm)
+    ax = Dm_array.plot(cmap=plt.cm.coolwarm)
     # ax.colorbar(fraction=0.046, pad=0.04)
     # TODO: minimise the color bar # cbar = map.colorbar(shrink=.5, aspect=15, pad=.05)
-    plt.annotate('Right click to show wave spectrum', (0, -100))
+    plt.annotate('Right click to show wave spectrum', (3, -86))
+    plt.annotate('Nguyen Chien / SOS - Bangor University', (183, -86))
     plt.connect('motion_notify_event', on_mousemove)
     plt.connect('button_press_event', on_click)
     plt.tight_layout()
@@ -116,7 +120,7 @@ def on_mousemove(event):
     if x is not None and y is not None:
         Hs, Dm, bathy = data_from_xy(x, y)
         if not np.isnan(Hs):
-            print(f'Hs = {Hs:.{2}f} m,  Dm = {Dm:.{1}f} °,  Bathy = {bathy:.{1}f} m')
+            print(f'Hs = {Hs:.{2}f} m,  Dm = {Dm:.{1}f}°,  Bathy = {bathy:.{1}f} m')
 
 
 def on_click(event):
@@ -154,6 +158,7 @@ def polar_plot(spec_data, info):
         and https://stackoverflow.com/a/9083017/4956603
         https://stackoverflow.com/questions/32462881/add-colorbar-to-existing-axis
         https://stackoverflow.com/questions/15908371/matplotlib-colorbars-and-its-text-labels
+        https://matplotlib.org/stable/gallery/widgets/slider_demo.html
     """
     FREQ_MIN = 0.03453
     FACTOR = 1.1
@@ -166,8 +171,22 @@ def polar_plot(spec_data, info):
     freqs = np.full(n_freq_bins, FREQ_MIN) * (FACTOR ** np.arange(0, n_freq_bins))
     r, theta = np.meshgrid(freqs, angles)
     # TODO: inconsistency direction plotted! Please check.
-    fig, ax = plt.subplots(subplot_kw=dict(projection='polar'), figsize=(4,4))
-    ctr = ax.contourf(theta, r, spec_data, 10, cmap='OrRd')
+    fig, ax = plt.subplots(subplot_kw=dict(projection='polar'), figsize=(4,5))
+
+    # adjust the main plot to make room for the slider
+    fig.subplots_adjust(bottom=0.25)
+    
+    # Make a horizontal slider to specify the time
+    axtime = fig.add_axes([0.25, 0.1, 0.55, 0.03])
+    date_slider = Slider(
+        ax=axtime,
+        label='Date Time',
+        valmin=0.1,
+        valmax=30,
+        valinit=3,
+    )
+
+    ctr, = ax.contourf(theta, r, spec_data, 10, cmap='OrRd')
     # ctr = ax.contourf(theta, r, spec_data, 10, cmap='OrRd', vmin=0, vmax=100)
     ax.set_xticklabels(['N', '', 'E', '', 'S', '', 'W', ''])
     ax.set_theta_direction(-1)
@@ -185,6 +204,12 @@ def polar_plot(spec_data, info):
     cbar.set_label('Spectral density, m²s rad⁻¹', rotation=270)
     thismanager = plt.get_current_fig_manager()
     move_figure(thismanager, 10, 0)
+
+    def update(dat):
+        # ctr.set_ydata(spec_data...)
+        fig.canvas.draw_idle()
+
+    date_slider.on_changed(update)
     plt.tight_layout()
     fig.show()
 
@@ -213,4 +238,7 @@ if __name__ == '__main__':
     else:
         spec_cube = ds.d2fd[0]
 
+    global start_dtime, end_dtime
+    start_dtime = ds.time[0]
+    end_dtime = ds.time[-1]
     plot_integ(intg)
