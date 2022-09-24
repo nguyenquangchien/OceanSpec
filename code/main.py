@@ -1,5 +1,5 @@
 import os
-from turtle import update
+import sys
 import psutil
 import pickle
 import matplotlib
@@ -34,18 +34,29 @@ def move_figure(f, x, y):
         f.window.move(x, y)
 
 
-def plot_integ(integ):
+def plot_integ(integ, map_UK=True):
     """ Plot a map of the integrated wave properties `integ`.
         Parameter: `integ` - a dataset.
         https://stackoverflow.com/a/26720422/
     """
-    plt.figure(figsize=(8, 4))
-    map = Basemap(projection='cyl',lon_0=180,lat_0=0,
-                  resolution='c', area_thresh = 50, 
-                  llcrnrlon=0, llcrnrlat=-89, urcrnrlon=360, urcrnrlat=89)
-    map.drawcoastlines(linewidth=0.25)
-    map.drawmeridians(np.arange(0, 361, 30))
-    map.drawparallels(np.arange(-90, 91, 30))
+    if map_UK:
+        print('Map_UK')
+        plt.figure(figsize=(5, 6))
+        map = Basemap(projection='cyl',lon_0=357,lat_0=54,
+                    resolution='i', area_thresh = 20, 
+                    llcrnrlon=354, llcrnrlat=48, urcrnrlon=360, urcrnrlat=60)
+        map.drawcoastlines(linewidth=0.5)
+        map.drawmeridians(np.arange(354, 361, 1))
+        map.drawparallels(np.arange(48, 61, 1))
+
+    else: # world map
+        plt.figure(figsize=(8, 4))
+        map = Basemap(projection='cyl',lon_0=180,lat_0=0,
+                    resolution='c', area_thresh = 50, 
+                    llcrnrlon=0, llcrnrlat=-89, urcrnrlon=360, urcrnrlat=89)
+        map.drawcoastlines(linewidth=0.25)
+        map.drawmeridians(np.arange(0, 361, 30))
+        map.drawparallels(np.arange(-90, 91, 30))
 
     global Hs_array, Dm_array, Bathy_array, date_time
     Hs_array = integ.swh[0]
@@ -215,6 +226,7 @@ def polar_plot(spec_data, info):
 
 
 if __name__ == '__main__':
+    map_UK = len(sys.argv) > 0 and sys.argv[1] == 'UK'
     ram_bytes = psutil.virtual_memory().total  # https://stackoverflow.com/a/22103295
     precompute = ram_bytes > 8_000_000_000      # about 8 GB RAM
     ds = read_file('code/spect.grib')
@@ -241,4 +253,4 @@ if __name__ == '__main__':
     global start_dtime, end_dtime
     start_dtime = ds.time[0]
     end_dtime = ds.time[-1]
-    plot_integ(intg)
+    plot_integ(intg, map_UK)
