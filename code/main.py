@@ -42,11 +42,12 @@ def plot_integ(integ, map_UK=True):
     if map_UK:
         print('Map_UK')
         plt.figure(figsize=(5, 6))
-        map = Basemap(projection='cyl',lon_0=357,lat_0=54,
-                    resolution='i', area_thresh = 20, 
-                    llcrnrlon=354, llcrnrlat=48, urcrnrlon=360, urcrnrlat=60)
+        map = Basemap(projection='lcc',lon_0=357,lat_0=54,
+                    resolution='l', area_thresh = 50, 
+                    llcrnrlon=350, llcrnrlat=48, urcrnrlon=4, urcrnrlat=60)
         map.drawcoastlines(linewidth=0.5)
-        map.drawmeridians(np.arange(354, 361, 1))
+        map.drawmeridians(np.arange(348, 361, 1))
+        map.drawmeridians(np.arange(0, 5, 1))
         map.drawparallels(np.arange(48, 61, 1))
 
     else: # world map
@@ -63,10 +64,23 @@ def plot_integ(integ, map_UK=True):
     Dm_array = integ.mwd[0]
     Bathy_array = integ.wmb[0]
     date_time = integ.time[0].values  # '2022-03-01 00:00'
+    if map_UK:
+        Hs_array = Hs_array[60:80, 705:]
+        Dm_array = Dm_array[60:80, 705:]
+        Bathy_array = Bathy_array[60:80, 705:]
 
     # fig, ax = plt.subplots()
     # ax.pcolor(Hs_array, cmap=plt.cm.coolwarm)
-    ax = Dm_array.plot(cmap=plt.cm.coolwarm)
+    ax = Hs_array.plot(cmap=plt.cm.coolwarm)
+    if map_UK:
+        map = Basemap(projection='lcc',lon_0=357,lat_0=54,
+                    resolution='l', area_thresh = 50, 
+                    llcrnrlon=350, llcrnrlat=48, urcrnrlon=4, urcrnrlat=60)
+        map.drawcoastlines(linewidth=0.5)
+        map.drawmeridians(np.arange(348, 361, 1))
+        map.drawmeridians(np.arange(0, 5, 1))
+        map.drawparallels(np.arange(48, 61, 1))
+
     # ax.colorbar(fraction=0.046, pad=0.04)
     # TODO: minimise the color bar # cbar = map.colorbar(shrink=.5, aspect=15, pad=.05)
     plt.annotate('Right click to show wave spectrum', (3, -86))
@@ -226,7 +240,8 @@ def polar_plot(spec_data, info):
 
 
 if __name__ == '__main__':
-    map_UK = len(sys.argv) > 0 and sys.argv[1] == 'UK'
+    map_UK = len(sys.argv) > 1 and sys.argv[1] == 'UK'
+    
     ram_bytes = psutil.virtual_memory().total  # https://stackoverflow.com/a/22103295
     precompute = ram_bytes > 8_000_000_000      # about 8 GB RAM
     ds = read_file('code/spect.grib')
