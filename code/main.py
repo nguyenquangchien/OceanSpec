@@ -42,13 +42,13 @@ def plot_integ(integ, map_UK=True):
     if map_UK:
         print('Map_UK')
         plt.figure(figsize=(5, 6))
-        map = Basemap(projection='lcc',lon_0=357,lat_0=54,
-                    resolution='l', area_thresh = 50, 
-                    llcrnrlon=350, llcrnrlat=48, urcrnrlon=4, urcrnrlat=60)
-        map.drawcoastlines(linewidth=0.5)
-        map.drawmeridians(np.arange(348, 361, 1))
-        map.drawmeridians(np.arange(0, 5, 1))
-        map.drawparallels(np.arange(48, 61, 1))
+        # map = Basemap(projection='lcc',lon_0=357,lat_0=54,
+        #             resolution='l', area_thresh = 50, 
+        #             llcrnrlon=350, llcrnrlat=48, urcrnrlon=4, urcrnrlat=60)
+        # map.drawcoastlines(linewidth=0.5)
+        # map.drawmeridians(np.arange(348, 361, 1))
+        # map.drawmeridians(np.arange(0, 5, 1))
+        # map.drawparallels(np.arange(48, 61, 1))
 
     else: # world map
         plt.figure(figsize=(8, 4))
@@ -72,14 +72,6 @@ def plot_integ(integ, map_UK=True):
     # fig, ax = plt.subplots()
     # ax.pcolor(Hs_array, cmap=plt.cm.coolwarm)
     ax = Hs_array.plot(cmap=plt.cm.coolwarm)
-    if map_UK:
-        map = Basemap(projection='lcc',lon_0=357,lat_0=54,
-                    resolution='l', area_thresh = 50, 
-                    llcrnrlon=350, llcrnrlat=48, urcrnrlon=4, urcrnrlat=60)
-        map.drawcoastlines(linewidth=0.5)
-        map.drawmeridians(np.arange(348, 361, 1))
-        map.drawmeridians(np.arange(0, 5, 1))
-        map.drawparallels(np.arange(48, 61, 1))
 
     # ax.colorbar(fraction=0.046, pad=0.04)
     # TODO: minimise the color bar # cbar = map.colorbar(shrink=.5, aspect=15, pad=.05)
@@ -143,6 +135,7 @@ def on_mousemove(event):
     '''
     x, y = event.xdata, event.ydata
     if x is not None and y is not None:
+        print(x, y)
         Hs, Dm, bathy = data_from_xy(x, y)
         if not np.isnan(Hs):
             print(f'Hs = {Hs:.{2}f} m,  Dm = {Dm:.{1}f}°,  Bathy = {bathy:.{1}f} m')
@@ -211,7 +204,7 @@ def polar_plot(spec_data, info):
         valinit=3,
     )
 
-    ctr, = ax.contourf(theta, r, spec_data, 10, cmap='OrRd')
+    ctr = ax.contourf(theta, r, spec_data, 10, cmap='OrRd')
     # ctr = ax.contourf(theta, r, spec_data, 10, cmap='OrRd', vmin=0, vmax=100)
     ax.set_xticklabels(['N', '', 'E', '', 'S', '', 'W', ''])
     ax.set_theta_direction(-1)
