@@ -2,6 +2,7 @@ import os
 import sys
 import psutil
 import pickle
+import cmocean
 import matplotlib
 import numpy as np
 import xarray as xr
@@ -42,6 +43,10 @@ def plot_integ(integ, map_UK=True):
     if map_UK:
         print('Map_UK')
         plt.figure(figsize=(5, 6))
+        # Disabling the following map lines gives correct click coordinates
+        # e.g. 357.7757747672084 50.34050099623113
+        # but still gives IndexError, for example
+        # IndexError: index 79 is out of bounds for axis 0 with size 20
         # map = Basemap(projection='lcc',lon_0=357,lat_0=54,
         #             resolution='l', area_thresh = 50, 
         #             llcrnrlon=350, llcrnrlat=48, urcrnrlon=4, urcrnrlat=60)
@@ -71,7 +76,8 @@ def plot_integ(integ, map_UK=True):
 
     # fig, ax = plt.subplots()
     # ax.pcolor(Hs_array, cmap=plt.cm.coolwarm)
-    ax = Hs_array.plot(cmap=plt.cm.coolwarm)
+    # ax = Hs_array.plot(cmap=plt.cm.coolwarm)
+    ax = Dm_array.plot(cmap=cmocean.cm.phase)
 
     # ax.colorbar(fraction=0.046, pad=0.04)
     # TODO: minimise the color bar # cbar = map.colorbar(shrink=.5, aspect=15, pad=.05)
@@ -123,6 +129,11 @@ def data_from_xy(x, y):
     """
     i = int(-y * 2 + 180)
     j = int(x * 2)
+    if map_UK:
+        # adjust i, j
+        i -= 60
+        j -= 705
+    
     Hs = Hs_array[i][j].values
     Dm = Dm_array[i][j].values
     bathy = Bathy_array[i][j].values
@@ -228,7 +239,7 @@ def polar_plot(spec_data, info):
         fig.canvas.draw_idle()
 
     date_slider.on_changed(update)
-    plt.tight_layout()
+    # plt.tight_layout()  # error warning - incompatible
     fig.show()
 
 
