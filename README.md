@@ -1,6 +1,7 @@
 # OceanSpec
 Visualize the ocean wave spectra in a meaningful way. 
 
+A software product (OXW) based on this codebase is available. More details can be found from [my website](https://coastal-study.uk/lab/).
 
 ## ECMWF convention
 
@@ -32,7 +33,8 @@ This work is done in ECMWF Hackathon, Reading 11-12 June 2022.
 
 Nguyen Q. Chien writes the code run on Anaconda Python with Matplotlib/Basemap/Cartopy visualization.
 
-James Varndell writes the ![web-based version](https://cds-dev.copernicus-climate.eu/apps/c3s/app-hackathon-wave-spectrum) and helped Nguyen Chien use the libraries delivered by ECMWF.
+James Varndell writes the web-based version and helped Nguyen Chien use the libraries delivered by ECMWF.
+<!-- The web-based version, previously on (https://cds-dev.copernicus-climate.eu/apps/c3s/app-hackathon-wave-spectrum), is now unavailable.-->
 
 <img src="fig/ECWMF-logo.png" width="120">
 
